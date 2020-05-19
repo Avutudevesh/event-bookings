@@ -2,6 +2,7 @@
 	"env": {
 		"MONGO_USER": "devesh",
 		"MONGO_PASSWORD": "deveshMongo%40098",
-		"MONGO_DB": "events_graphql"
+		"MONGO_DB": "events_graphql",
+		"TOKEN_SECRET": "hgfeqbfhveqhufvewqvfveqwfhv"
 	}
 }
