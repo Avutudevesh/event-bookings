@@ -3,7 +3,10 @@ const Event = require("../models/events");
 const { bookingMapper, eventMapper } = require("./mappers");
 
 module.exports = {
-	bookings: async () => {
+	bookings: async (args, req) => {
+		if (!req.isAuth) {
+			throw new Error("Unauthorized");
+		}
 		try {
 			const bookings = await Booking.find();
 			return bookings.map((item) => {
@@ -13,14 +16,17 @@ module.exports = {
 			throw err;
 		}
 	},
-	bookEvent: async ({ eventId }) => {
+	bookEvent: async ({ eventId }, req) => {
+		if (!req.isAuth) {
+			throw new Error("Unauthorized");
+		}
 		try {
 			const event = await Event.findById(eventId);
 			if (!event) {
 				throw new Error("No event found");
 			}
 			const booking = new Booking({
-				user: "5ec29624f1c63b5983140233",
+				user: req.userId,
 				event: eventId,
 			});
 			const result = await booking.save();
@@ -29,7 +35,10 @@ module.exports = {
 			throw err;
 		}
 	},
-	cancelBooking: async ({ bookingId }) => {
+	cancelBooking: async ({ bookingId }, req) => {
+		if (!req.isAuth) {
+			throw new Error("Unauthorized");
+		}
 		try {
 			const booking = await Booking.findByIdAndDelete(bookingId);
 			const event = await Event.findById(booking.event);
