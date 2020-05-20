@@ -1,4 +1,5 @@
 {
+	"watch": ["./server"],
 	"env": {
 		"MONGO_USER": "devesh",
 		"MONGO_PASSWORD": "deveshMongo%40098",

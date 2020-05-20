@@ -3,11 +3,15 @@ import "./EventsPage.css";
 import Modal from "../components/modal/Modal";
 import Backdrop from "../components/backdrop/Backdrop";
 import AuthContext from "../context/AuthContext";
+import EventList from "../components/events/EventList";
+import Spinner from "../components/spinner/Spinner";
 
 export default () => {
 	const authContext = useContext(AuthContext);
 	const [addEvent, setAddEvent] = useState(false);
 	const [events, setEvents] = useState([]);
+	const [selectedEvent, setSelectedEvent] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
 	const eventTitle = useRef("");
 	const eventDesc = useRef("");
 	const eventDate = useRef("");
@@ -19,6 +23,7 @@ export default () => {
 
 	const modalCancelAction = () => {
 		setAddEvent(false);
+		setSelectedEvent(null);
 	};
 
 	const modalConfirmAction = async () => {
@@ -37,7 +42,10 @@ export default () => {
 				  title,
 				  description, 
 				  price,
-				  date
+				  date,
+				  creator {
+					  _id
+				  }
 				}
 			  }
 			`,
@@ -62,16 +70,18 @@ export default () => {
 
 	const fetchEvents = async () => {
 		try {
+			setIsLoading(true);
 			const requestBody = {
 				query: `
 				{
 					events{
 						_id,
 						price
-					  	title,
+						  title,
+						  description,
 					  	date,
 					  	creator{
-							email
+							_id
 					  	}
 					}
 				  }
@@ -87,20 +97,20 @@ export default () => {
 			const resData = await response.json();
 			console.log(resData.data.events);
 			setEvents(resData.data.events);
+			setIsLoading(false);
 		} catch (err) {
 			console.log(err);
+			setIsLoading(false);
 		}
 	};
 
-	const renderEventsList = () => {
-		return events.map((event) => {
-			return (
-				<li className="events_list_item" key={event._id}>
-					{event.title}
-				</li>
-			);
-		});
+	const showDetail = (eventId) => {
+		const event = events.find((e) => e._id === eventId);
+		console.log(event);
+		setSelectedEvent(event);
 	};
+
+	const bookEvent = () => {};
 	return (
 		<>
 			{authContext.token && (
@@ -143,14 +153,39 @@ export default () => {
 							</Modal>
 						</>
 					)}
+					{selectedEvent && (
+						<>
+							<Backdrop />
+							<Modal
+								title="Book Event"
+								cancelAction={modalCancelAction}
+								confirmAction={bookEvent}
+							>
+								<div>
+									<h1>{selectedEvent.title}</h1>
+									<h2>
+										{selectedEvent.price}-
+										{new Date(selectedEvent.date).toLocaleDateString()}
+									</h2>
+									<p>{selectedEvent.description}</p>
+								</div>
+							</Modal>
+						</>
+					)}
 					<button className="btn" onClick={() => setAddEvent(true)}>
 						Create Event
 					</button>
 				</div>
 			)}
-			<div>
-				<ul className="events_list">{renderEventsList()}</ul>
-			</div>
+			{isLoading ? (
+				<Spinner />
+			) : (
+				<EventList
+					events={events}
+					userId={authContext.userId}
+					onItemSelected={showDetail}
+				/>
+			)}
 		</>
 	);
 };
