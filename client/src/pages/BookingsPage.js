@@ -1,9 +1,61 @@
-import React from "react";
+import React, { useState, useContext, useEffect } from "react";
+import AuthContext from "../context/AuthContext";
+import BookingList from "../components/bookings/BookingsList";
+import Spinner from "../components/spinner/Spinner";
 
 export default () => {
+	const authContext = useContext(AuthContext);
+	const [isLoading, setIsLoading] = useState(false);
+	const [bookings, setBookings] = useState([]);
+	var isUnmounted = false;
+	useEffect(() => {
+		fetchBookings();
+		return () => {
+			isUnmounted = true;
+		};
+	}, []);
+	const fetchBookings = async () => {
+		try {
+			setIsLoading(true);
+			const requestBody = {
+				query: `
+				{
+					bookings {
+					  _id,
+					  event {
+						_id,
+						title,
+						date,
+						price
+					  },
+					  createdAt,
+					  updatedAt,
+					}
+				  }
+				`,
+			};
+			const response = await fetch("http://localhost:3000/graphql", {
+				method: "POST",
+				body: JSON.stringify(requestBody),
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${authContext.token}`,
+				},
+			});
+			const resData = await response.json();
+			console.log(resData.data.bookings);
+			if (!isUnmounted) {
+				setBookings(resData.data.bookings);
+				setIsLoading(false);
+			}
+		} catch (err) {
+			console.log(err);
+			if (!isUnmounted) {
+				setIsLoading(false);
+			}
+		}
+	};
 	return (
-		<div>
-			<h1>Bookings Page</h1>
-		</div>
+		<div>{isLoading ? <Spinner /> : <BookingList bookings={bookings} />}</div>
 	);
 };

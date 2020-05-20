@@ -6,7 +6,7 @@ import AuthContext from "../context/AuthContext";
 import EventList from "../components/events/EventList";
 import Spinner from "../components/spinner/Spinner";
 
-export default () => {
+export default ({ history }) => {
 	const authContext = useContext(AuthContext);
 	const [addEvent, setAddEvent] = useState(false);
 	const [events, setEvents] = useState([]);
@@ -17,8 +17,17 @@ export default () => {
 	const eventDate = useRef("");
 	const eventPrice = useRef("");
 
+	let response = null;
+	let isUnmounted = false;
+	const abortController = new AbortController();
+	const signal = abortController.signal;
+
 	useEffect(() => {
 		fetchEvents();
+		return () => {
+			abortController.abort();
+			isUnmounted = true;
+		};
 	}, []);
 
 	const modalCancelAction = () => {
@@ -52,13 +61,14 @@ export default () => {
 		};
 		console.log(requestBody);
 		try {
-			const response = await fetch("http://localhost:3000/graphql", {
+			response = await fetch("http://localhost:3000/graphql", {
 				method: "POST",
 				body: JSON.stringify(requestBody),
 				headers: {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${authContext.token}`,
 				},
+				signal,
 			});
 			const resData = await response.json();
 			console.log(resData);
@@ -87,20 +97,25 @@ export default () => {
 				  }
 				`,
 			};
-			const response = await fetch("http://localhost:3000/graphql", {
+			response = await fetch("http://localhost:3000/graphql", {
 				method: "POST",
 				body: JSON.stringify(requestBody),
 				headers: {
 					"Content-Type": "application/json",
 				},
+				signal,
 			});
 			const resData = await response.json();
 			console.log(resData.data.events);
-			setEvents(resData.data.events);
-			setIsLoading(false);
+			if (!isUnmounted) {
+				setEvents(resData.data.events);
+				setIsLoading(false);
+			}
 		} catch (err) {
 			console.log(err);
-			setIsLoading(false);
+			if (!isUnmounted) {
+				setIsLoading(false);
+			}
 		}
 	};
 
@@ -110,7 +125,41 @@ export default () => {
 		setSelectedEvent(event);
 	};
 
-	const bookEvent = () => {};
+	const bookEvent = async () => {
+		try {
+			if (authContext.token) {
+				const requestBody = {
+					query: `
+				mutation {
+					bookEvent(eventId:"${selectedEvent._id}"){
+					  event{
+						_id,
+						title
+					  }
+					}
+				  }
+				`,
+				};
+				response = await fetch("http://localhost:3000/graphql", {
+					method: "POST",
+					body: JSON.stringify(requestBody),
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${authContext.token}`,
+					},
+					signal,
+				});
+				const resData = await response.json();
+				console.log(resData.data.bookEvent.event);
+				setSelectedEvent(null);
+			} else {
+				history.push("/auth");
+			}
+		} catch (err) {
+			console.log(err);
+			setSelectedEvent(null);
+		}
+	};
 	return (
 		<>
 			{authContext.token && (
@@ -153,29 +202,29 @@ export default () => {
 							</Modal>
 						</>
 					)}
-					{selectedEvent && (
-						<>
-							<Backdrop />
-							<Modal
-								title="Book Event"
-								cancelAction={modalCancelAction}
-								confirmAction={bookEvent}
-							>
-								<div>
-									<h1>{selectedEvent.title}</h1>
-									<h2>
-										{selectedEvent.price}-
-										{new Date(selectedEvent.date).toLocaleDateString()}
-									</h2>
-									<p>{selectedEvent.description}</p>
-								</div>
-							</Modal>
-						</>
-					)}
 					<button className="btn" onClick={() => setAddEvent(true)}>
 						Create Event
 					</button>
 				</div>
+			)}
+			{selectedEvent && (
+				<>
+					<Backdrop />
+					<Modal
+						title="Book Event"
+						cancelAction={modalCancelAction}
+						confirmAction={bookEvent}
+					>
+						<div>
+							<h1>{selectedEvent.title}</h1>
+							<h2>
+								{selectedEvent.price}-
+								{new Date(selectedEvent.date).toLocaleDateString()}
+							</h2>
+							<p>{selectedEvent.description}</p>
+						</div>
+					</Modal>
+				</>
 			)}
 			{isLoading ? (
 				<Spinner />

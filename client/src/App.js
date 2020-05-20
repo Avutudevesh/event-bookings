@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { BrowserRouter, Route, Redirect, Switch } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
@@ -6,17 +6,29 @@ import BookingsPage from "./pages/BookingsPage";
 import EventsPage from "./pages/EventsPage";
 import MainNavigation from "./components/navigation/MainNavigation";
 import AuthContext from "./context/AuthContext";
-import { set } from "mongoose";
 
 const App = () => {
 	const [token, setToken] = useState(null);
 	const [userId, setUserId] = useState(null);
 	const [tokenExpiration, setTokenExpiration] = useState(null);
 
+	useEffect(() => {
+		tryLocalSignin();
+	});
+
+	const tryLocalSignin = () => {
+		setToken(window.localStorage.getItem("access_token"));
+		setUserId(window.localStorage.getItem("userId"));
+		setTokenExpiration(window.localStorage.getItem("tokenExpiration"));
+	};
+
 	const login = (token, userId, tokenExpiration) => {
 		setToken(token);
 		setTokenExpiration(tokenExpiration);
 		setUserId(userId);
+		window.localStorage.setItem("access_token", token);
+		window.localStorage.setItem("userId", userId);
+		window.localStorage.setItem("tokenExpiration", tokenExpiration);
 	};
 	const logout = () => {
 		setToken(null);
