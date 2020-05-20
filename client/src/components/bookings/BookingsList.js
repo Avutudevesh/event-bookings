@@ -1,10 +1,16 @@
 import React from "react";
 import BookingItem from "./BookingsItem";
 
-export default ({ bookings }) => {
+export default ({ bookings, onCancelBooking }) => {
 	const renderEventItems = () => {
 		return bookings.map((booking) => {
-			return <BookingItem key={booking._id} booking={booking} />;
+			return (
+				<BookingItem
+					key={booking._id}
+					booking={booking}
+					onCancelClicked={onCancelBooking}
+				/>
+			);
 		});
 	};
 	return (

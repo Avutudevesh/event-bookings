@@ -55,7 +55,42 @@ export default () => {
 			}
 		}
 	};
+
+	const cancelBooking = async (bookingId) => {
+		try {
+			const requestBody = {
+				query: `
+				mutation {
+					cancelBooking(bookingId:"${bookingId}"){
+					  _id,
+					  title,
+					  date,
+					}
+				  }
+				`,
+			};
+			const response = await fetch("http://localhost:3000/graphql", {
+				method: "POST",
+				body: JSON.stringify(requestBody),
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${authContext.token}`,
+				},
+			});
+			const resData = await response.json();
+			console.log(resData.data.cancelBooking);
+			fetchBookings();
+		} catch (err) {
+			console.log(err);
+		}
+	};
 	return (
-		<div>{isLoading ? <Spinner /> : <BookingList bookings={bookings} />}</div>
+		<div>
+			{isLoading ? (
+				<Spinner />
+			) : (
+				<BookingList bookings={bookings} onCancelBooking={cancelBooking} />
+			)}
+		</div>
 	);
 };

@@ -1,6 +1,6 @@
 import React from "react";
 
-export default ({ booking }) => {
+export default ({ booking, onCancelClicked }) => {
 	return (
 		<li className="events_list_item">
 			<div>
@@ -10,15 +10,16 @@ export default ({ booking }) => {
 					{new Date(booking.event.date).toLocaleDateString()}
 				</h2>
 			</div>
-			{/* <div>
-				{creatorId !== userId ? (
-					<button className="btn" onClick={() => onDetailsClick(eventId)}>
-						View Details
-					</button>
-				) : (
-					<p>Your Event</p>
-				)}
-			</div> */}
+			<div>
+				<button
+					className="btn"
+					onClick={() => {
+						onCancelClicked(booking._id);
+					}}
+				>
+					Cancel
+				</button>
+			</div>
 		</li>
 	);
 };

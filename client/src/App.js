@@ -34,6 +34,7 @@ const App = () => {
 		setToken(null);
 		setTokenExpiration(null);
 		setUserId(null);
+		window.localStorage.clear();
 	};
 	return (
 		<BrowserRouter>
