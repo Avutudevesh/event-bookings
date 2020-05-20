@@ -11,6 +11,7 @@ const bookingMapper = (booking) => {
 		user: getUser.bind(this, booking.user),
 	};
 };
+
 const eventMapper = (event) => {
 	return {
 		...event,
@@ -42,6 +43,7 @@ const getSingleEvent = async (eventId) => {
 		throw err;
 	}
 };
+
 const getUser = async (userId) => {
 	try {
 		const user = await User.findById(userId);
