@@ -2,11 +2,14 @@ import React, { useState, useContext, useEffect } from "react";
 import AuthContext from "../context/AuthContext";
 import BookingList from "../components/bookings/BookingsList";
 import Spinner from "../components/spinner/Spinner";
+import BookingsChart from "../components/bookings/BookingsChart";
+import BookingsControl from "../components/bookings/BookingsControl";
 
 export default () => {
 	const authContext = useContext(AuthContext);
 	const [isLoading, setIsLoading] = useState(false);
 	const [bookings, setBookings] = useState([]);
+	const [outputType, setOutputType] = useState("list");
 	var isUnmounted = false;
 	useEffect(() => {
 		fetchBookings();
@@ -84,13 +87,31 @@ export default () => {
 			console.log(err);
 		}
 	};
-	return (
-		<div>
-			{isLoading ? (
-				<Spinner />
-			) : (
-				<BookingList bookings={bookings} onCancelBooking={cancelBooking} />
-			)}
-		</div>
-	);
+
+	const changeOutputType = (outputType) => {
+		if (outputType === "list") {
+			setOutputType("list");
+		} else {
+			setOutputType("chart");
+		}
+	};
+	let content = <Spinner />;
+	if (!isLoading) {
+		content = (
+			<>
+				<BookingsControl
+					changeOutputType={changeOutputType}
+					selectedType={outputType}
+				/>
+				<div>
+					{outputType === "list" ? (
+						<BookingList bookings={bookings} onCancelBooking={cancelBooking} />
+					) : (
+						<BookingsChart bookings={bookings} />
+					)}
+				</div>
+			</>
+		);
+	}
+	return <div>{content}</div>;
 };

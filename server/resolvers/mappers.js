@@ -17,7 +17,7 @@ const bookingMapper = (booking) => {
 		createdAt: dateToString(booking.createdAt),
 		updatedAt: dateToString(booking.updatedAt),
 		event: getSingleEvent.bind(this, booking.event),
-		user: getUser.bind(this, booking.user),
+		user: () => getUser(booking.user),
 	};
 };
 
@@ -25,7 +25,7 @@ const eventMapper = (event) => {
 	return {
 		...event,
 		date: dateToString(event.date),
-		creator: getUser.bind(this, event.creator),
+		creator: () => getUser(event.creator),
 	};
 };
 
@@ -54,7 +54,12 @@ const getUser = async (userId) => {
 		const user = await userLoader.load(userId.toString());
 		return {
 			...user._doc,
-			createdEvents: eventLoader.loadMany.bind(this, user._doc.createdEvents),
+			createdEvents: async () => {
+				const events = await eventLoader.loadMany(
+					user._doc.createdEvents.map((eventId) => eventId.toString())
+				);
+				return events.map((event) => event._doc);
+			},
 		};
 	} catch (err) {
 		throw err;
